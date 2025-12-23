@@ -4,7 +4,7 @@ from functools import reduce
 import torch
 from itertools import chain
 from runners.separated.base_runner import Runner
-
+import os
 def _t2n(x):
     return x.detach().cpu().numpy()
 
@@ -14,7 +14,6 @@ class CRunner(Runner):
         super(CRunner, self).__init__(config)
 
     def run(self):
-
         start = time.time()
         episodes = int(self.num_env_steps) // self.episode_length // self.n_rollout_threads
         rewards_log = []
@@ -29,9 +28,12 @@ class CRunner(Runner):
         for episode in range(episodes):
             
             if episode % self.eval_interval == 0 and self.use_eval:
-                re, bw_res = self.eval()
+                re, cost_res, service_res, bw_res = self.eval()
                 print()
-                print("Eval average reward: ", re, " Eval ordering fluctuation measurement (downstream to upstream): ", bw_res)
+                print("Eval average reward: ", re,
+                      " Eval cost per echelon (downstream to upstream): ", cost_res,
+                      " Eval service level per echelon (downstream to upstream): ", service_res,
+                      " Eval ordering fluctuation measurement (downstream to upstream): ", bw_res)
                 if(re > best_reward and episode > 0):
                     self.save()
                     print("A better model is saved!")
@@ -130,7 +132,7 @@ class CRunner(Runner):
                 actions_log = []
                 demand_log = []
             # eval
-
+        return best_reward, best_bw
     def warmup(self):
         # reset env
         obs, available_actions = self.envs.reset()
@@ -157,6 +159,9 @@ class CRunner(Runner):
         action_log_prob_collector=[]
         rnn_state_collector=[]
         rnn_state_critic_collector=[]
+
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
 
         for agent_id in range(self.num_agents):
             self.trainer[agent_id].prep_rollout()
@@ -310,5 +315,8 @@ class CRunner(Runner):
                 eval_masks = np.ones((self.all_args.n_eval_rollout_threads, self.num_agents, 1), dtype=np.float32)
                 eval_masks[eval_dones_env == True] = np.zeros(((eval_dones_env == True).sum(), self.num_agents, 1), dtype=np.float32)
         
+        cost_res = self.eval_envs.get_eval_cost_res()
+        service_res = self.eval_envs.get_eval_service_res()
+
         bw_res = self.eval_envs.get_eval_bw_res()
-        return np.mean(overall_reward), bw_res
+        return np.mean(overall_reward), cost_res, service_res, bw_res
