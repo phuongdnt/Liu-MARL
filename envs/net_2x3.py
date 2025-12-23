@@ -87,6 +87,10 @@ class Env(object):
         self.inventory = []
         self.order = []
         self.record_act_sta = [[] for i in range(2*LEVEL_NUM)]
+        self.record_cost = [[] for i in range(LEVEL_NUM)]
+        self.record_service = [[] for i in range(LEVEL_NUM)]
+        self.eval_cost_res = []
+        self.eval_service_res = []
         self.eposide_max_steps = EPOSIDE_LEN
         self.eval_eposide_len = EPOSIDE_LEN
         #============================================================================ 
@@ -160,6 +164,12 @@ class Env(object):
         """
         return self.eval_bw_res
     
+    def get_eval_cost_res(self):
+        return self.eval_cost_res
+
+    def get_eval_service_res(self):
+        return self.eval_service_res
+
     def get_demand(self):
         return [self.demand_list[0][self.step_num-1], self.demand_list[1][self.step_num-1]]
     
@@ -331,6 +341,11 @@ class Env(object):
                 reward = - actual_order[0]*C[i][0] - actual_order[1]*C[i][1] - self.inventory[i][j]*H[i] - b_c
                 rewards[i*2+j] = reward
 
+                if(self.train == False):
+                    self.eval_total_cost[i] += -reward
+                    demand_total = np.sum(cur_demmand[i][j])
+                    self.eval_total_demand[i] += demand_total
+                    self.eval_total_fulfilled[i] += demand_total - np.sum(self.backlog[i*2+j])
             sale_s2c = t_sale_s2c
         
         if(self.train == False and self.step_num == self.eval_eposide_len-1):
@@ -342,13 +357,28 @@ class Env(object):
                         tem = [self.action_history[k*2+j][0][i] + self.action_history[k*2+j][1][i] for i in range(len(self.action_history[k*2+j][1]))]
                         self.record_act_sta[k*2+j].append(np.std(tem)/np.mean(tem))
 
+                self.record_cost[k].append(self.eval_total_cost[k] / self.eval_eposide_len)
+                if(self.eval_total_demand[k] < 1e-6):
+                    self.record_service[k].append(1.0)
+                else:
+                    self.record_service[k].append(self.eval_total_fulfilled[k] / self.eval_total_demand[k])
+
         if(self.train == False and self.eval_index == 0 and self.step_num == self.eval_eposide_len-1):
             self.eval_bw_res = []
+
             for i in range(LEVEL_NUM):
                 temp = []
                 for j in range(2):
                     temp.append(np.mean(self.record_act_sta[i*2+j]))
                 self.eval_bw_res.append(np.mean(temp))
             self.record_act_sta = [[] for i in range(2*LEVEL_NUM)]
+
+            self.eval_cost_res = []
+            self.eval_service_res = []
+            for i in range(LEVEL_NUM):
+                self.eval_cost_res.append(np.mean(self.record_cost[i]))
+                self.eval_service_res.append(np.mean(self.record_service[i]))
+            self.record_cost = [[] for i in range(LEVEL_NUM)]
+            self.record_service = [[] for i in range(LEVEL_NUM)]
         
         return rewards
