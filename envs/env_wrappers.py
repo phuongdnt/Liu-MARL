@@ -207,6 +207,14 @@ class DummyVecEnv(object):
         res = self.env_list[0].get_eval_bw_res()
         return res
     
+    def get_eval_cost_res(self):
+        res = self.env_list[0].get_eval_cost_res()
+        return res
+
+    def get_eval_service_res(self):
+        res = self.env_list[0].get_eval_service_res()
+        return res
+
     def get_eval_num(self):
         eval_num = self.env_list[0].get_eval_num()
         return eval_num
