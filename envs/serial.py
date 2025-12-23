@@ -90,6 +90,10 @@ class Env(object):
         self.backlog = []
         self.order = []
         self.record_act_sta = [[] for i in range(LEVEL_NUM)]
+        self.record_cost = [[] for i in range(LEVEL_NUM)]
+        self.record_service = [[] for i in range(LEVEL_NUM)]
+        self.eval_cost_res = []
+        self.eval_service_res = []
         self.eval_episode_len = EPISODE_LEN
         self.episode_max_steps = EPISODE_LEN
         #============================================================================ 
@@ -121,6 +125,9 @@ class Env(object):
             self.eval_index += 1
             if(self.eval_index == self.n_eval):
                 self.eval_index = 0
+            self.eval_total_cost = [0 for i in range(LEVEL_NUM)]
+            self.eval_total_demand = [0 for i in range(LEVEL_NUM)]
+            self.eval_total_fulfilled = [0 for i in range(LEVEL_NUM)]
 
         sub_agent_obs = self.get_reset_obs(normalize) # Get reset obs
             
@@ -160,7 +167,14 @@ class Env(object):
         """
 
         return self.eval_bw_res
-    
+
+
+    def get_eval_cost_res(self):
+        return self.eval_cost_res
+
+    def get_eval_service_res(self):
+        return self.eval_service_res
+        
     def get_demand(self):
         return [self.demand_list[self.step_num-1]]
     
@@ -322,6 +336,10 @@ class Env(object):
 
             rewards.append(reward)
         
+            if(self.train == False):
+                self.eval_total_cost[i] += -reward
+                self.eval_total_demand[i] += cur_demmand[i]
+                self.eval_total_fulfilled[i] += cur_demmand[i] - self.backlog[i]
 
         if(self.train == False and self.step_num == self.eval_episode_len-1):
             for k in range(LEVEL_NUM):
@@ -329,6 +347,12 @@ class Env(object):
                     self.record_act_sta[k].append(0)
                 else:
                     self.record_act_sta[k].append(np.std(self.action_history[k])/np.mean(self.action_history[k]))
+                self.record_cost[k].append(self.eval_total_cost[k] / self.eval_episode_len)
+
+                if(self.eval_total_demand[k] < 1e-6):
+                    self.record_service[k].append(1.0)
+                else:
+                    self.record_service[k].append(self.eval_total_fulfilled[k] / self.eval_total_demand[k])
 
         if(self.train == False and self.eval_index == 0 and self.step_num == self.eval_episode_len-1):
             self.eval_bw_res = []
@@ -336,4 +360,13 @@ class Env(object):
                 self.eval_bw_res.append(np.mean(self.record_act_sta[i]))
             self.record_act_sta = [[] for i in range(LEVEL_NUM)]
 
+
+            self.eval_cost_res = []
+            self.eval_service_res = []
+            for i in range(LEVEL_NUM):
+                self.eval_cost_res.append(np.mean(self.record_cost[i]))
+                self.eval_service_res.append(np.mean(self.record_service[i]))
+            self.record_cost = [[] for i in range(LEVEL_NUM)]
+            self.record_service = [[] for i in range(LEVEL_NUM)]
+            
         return rewards
