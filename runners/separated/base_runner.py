@@ -1,6 +1,7 @@
     
 import time
 import os
+from pathlib import Path
 import numpy as np
 from itertools import chain
 import torch
@@ -50,17 +51,14 @@ class Runner(object):
             import imageio
             self.run_dir = config["run_dir"]
             self.gif_dir = str(self.run_dir / 'gifs')
-            if not os.path.exists(self.gif_dir):
-                os.makedirs(self.gif_dir)
+            Path(self.gif_dir).mkdir(parents=True, exist_ok=True)
         else:
             self.run_dir = config["run_dir"]
             self.log_dir = str(self.run_dir / 'logs')
-            if not os.path.exists(self.log_dir):
-                os.makedirs(self.log_dir)
+            Path(self.log_dir).mkdir(parents=True, exist_ok=True)
             self.writter = SummaryWriter(self.log_dir)
-            self.save_dir = str(self.run_dir / 'models')
-            if not os.path.exists(self.save_dir):
-                os.makedirs(self.save_dir)
+        self.save_dir = str(Path(self.run_dir) / 'models')
+        Path(self.save_dir).mkdir(parents=True, exist_ok=True)
 
 
         if self.all_args.algorithm_name == "happo":
@@ -158,15 +156,30 @@ class Runner(object):
         return train_infos
 
     def save(self):
+        if not hasattr(self, "save_dir") or self.save_dir is None:
+            self.save_dir = str(Path(self.run_dir) / 'models')
+        save_path = Path(self.save_dir)
+        save_path.mkdir(parents=True, exist_ok=True)
         for agent_id in range(self.num_agents):
             if self.use_single_network:
-                policy_model = self.trainer[agent_id].policy.model
-                torch.save(policy_model.state_dict(), str(self.save_dir) + "/model_agent" + str(agent_id) + ".pt")
+                model_path = save_path / f"model_agent{agent_id}.pt"
+                model_path.parent.mkdir(parents=True, exist_ok=True)
+                torch.save(
+                    self.trainer[agent_id].policy.model.state_dict(),
+                    str(model_path),
+                )
             else:
-                policy_actor = self.trainer[agent_id].policy.actor
-                torch.save(policy_actor.state_dict(), str(self.save_dir) + "/actor_agent" + str(agent_id) + ".pt")
-                policy_critic = self.trainer[agent_id].policy.critic
-                torch.save(policy_critic.state_dict(), str(self.save_dir) + "/critic_agent" + str(agent_id) + ".pt")
+                actor_path = save_path / f"actor_agent{agent_id}.pt"
+                critic_path = save_path / f"critic_agent{agent_id}.pt"
+                actor_path.parent.mkdir(parents=True, exist_ok=True)
+                torch.save(
+                    self.trainer[agent_id].policy.actor.state_dict(),
+                    str(actor_path),
+                )
+                torch.save(
+                    self.trainer[agent_id].policy.critic.state_dict(),
+                    str(critic_path),
+                )
 
     def restore(self):
         for agent_id in range(self.num_agents):
