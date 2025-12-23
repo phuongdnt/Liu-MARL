@@ -23,8 +23,12 @@ def parse_args(args, parser):
 if __name__ == "__main__":
     parser = get_config()
     all_args = parse_args(sys.argv[1:], parser)
-    seeds = all_args.seed
-
+    seeds = [all_args.seed]
+    if isinstance(seeds, int):
+        seeds = [seeds]
+    elif isinstance(seeds, (list, tuple)) and len(seeds) == 1 and isinstance(seeds[0], (list, tuple)):
+        seeds = list(seeds[0])
+        
     print("all config: ", all_args)
     # cuda
     if all_args.cuda and torch.cuda.is_available():
@@ -54,7 +58,7 @@ if __name__ == "__main__":
         run_dir = run_dir / curr_run
         if not run_dir.exists():
             os.makedirs(str(run_dir))
-        
+        (run_dir / "models").mkdir(parents=True, exist_ok=True)        
 
         if not os.path.exists(seed_res_record_file):
             open(seed_res_record_file, 'a+')
