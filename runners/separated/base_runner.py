@@ -157,11 +157,13 @@ class Runner(object):
     def save(self):
         save_path = self.run_dir / 'models'
         save_path.mkdir(parents=True, exist_ok=True)
+        os.makedirs(str(save_path), exist_ok=True)
         self.save_dir = str(save_path)
         for agent_id in range(self.num_agents):
             if self.use_single_network:
                 model_path = save_path / f"model_agent{agent_id}.pt"
                 model_path.parent.mkdir(parents=True, exist_ok=True)
+                os.makedirs(str(model_path.parent), exist_ok=True)
                 torch.save(
                     self.trainer[agent_id].policy.model.state_dict(),
                     str(model_path),
@@ -171,6 +173,8 @@ class Runner(object):
                 critic_path = save_path / f"critic_agent{agent_id}.pt"
                 actor_path.parent.mkdir(parents=True, exist_ok=True)
                 critic_path.parent.mkdir(parents=True, exist_ok=True)
+                os.makedirs(str(actor_path.parent), exist_ok=True)
+                os.makedirs(str(critic_path.parent), exist_ok=True)
                 torch.save(
                     self.trainer[agent_id].policy.actor.state_dict(),
                     str(actor_path),
