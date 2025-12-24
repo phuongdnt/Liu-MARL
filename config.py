@@ -12,7 +12,7 @@ def get_config():
     parser.add_argument("--algorithm_name", type=str,
                         default='happo', choices=["happo"])
     parser.add_argument('--scenario_name', type=str, 
-                        default='Ineventory Management', help="Which scenario to run on")
+                        default='Inventory Management', help="Which scenario to run on")
     parser.add_argument("--num_landmarks", type=int, 
                         default=3)
     parser.add_argument('--num_agents', type=int, 
