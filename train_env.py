@@ -45,7 +45,6 @@ if __name__ == "__main__":
 
     for seed in seeds:
         print("-------------------------------------------------Training starts for seed: " + str(seed)+ "---------------------------------------------------")
-
         project_dir = Path(__file__).resolve().parent
         results_dir = project_dir.parent / "results"
         run_dir = results_dir / all_args.env_name / all_args.scenario_name / all_args.algorithm_name / all_args.experiment_name
