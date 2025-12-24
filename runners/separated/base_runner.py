@@ -1,4 +1,3 @@
-    
 import time
 import os
 from pathlib import Path
@@ -47,17 +46,17 @@ class Runner(object):
         # dir
         self.model_dir = self.all_args.model_dir
 
+        self.run_dir = Path(config["run_dir"]).resolve()
+        self.run_dir.mkdir(parents=True, exist_ok=True)
         if self.use_render:
             import imageio
-            self.run_dir = config["run_dir"]
             self.gif_dir = str(self.run_dir / 'gifs')
             Path(self.gif_dir).mkdir(parents=True, exist_ok=True)
         else:
-            self.run_dir = config["run_dir"]
             self.log_dir = str(self.run_dir / 'logs')
             Path(self.log_dir).mkdir(parents=True, exist_ok=True)
             self.writter = SummaryWriter(self.log_dir)
-        self.save_dir = str(Path(self.run_dir) / 'models')
+        self.save_dir = str(self.run_dir / 'models')
         Path(self.save_dir).mkdir(parents=True, exist_ok=True)
 
 
@@ -156,10 +155,9 @@ class Runner(object):
         return train_infos
 
     def save(self):
-        if not hasattr(self, "save_dir") or self.save_dir is None:
-            self.save_dir = str(Path(self.run_dir) / 'models')
-        save_path = Path(self.save_dir)
+        save_path = self.run_dir / 'models'
         save_path.mkdir(parents=True, exist_ok=True)
+        self.save_dir = str(save_path)
         for agent_id in range(self.num_agents):
             if self.use_single_network:
                 model_path = save_path / f"model_agent{agent_id}.pt"
@@ -172,6 +170,7 @@ class Runner(object):
                 actor_path = save_path / f"actor_agent{agent_id}.pt"
                 critic_path = save_path / f"critic_agent{agent_id}.pt"
                 actor_path.parent.mkdir(parents=True, exist_ok=True)
+                critic_path.parent.mkdir(parents=True, exist_ok=True)
                 torch.save(
                     self.trainer[agent_id].policy.actor.state_dict(),
                     str(actor_path),
