@@ -46,22 +46,21 @@ if __name__ == "__main__":
     for seed in seeds:
         print("-------------------------------------------------Training starts for seed: " + str(seed)+ "---------------------------------------------------")
 
-        run_dir = Path(os.path.split(os.path.dirname(os.path.abspath(__file__)))[
-                        0] + "/results") / all_args.env_name / all_args.scenario_name / all_args.algorithm_name / all_args.experiment_name
-        if not run_dir.exists():
-            os.makedirs(str(run_dir))
+        project_dir = Path(__file__).resolve().parent
+        results_dir = project_dir.parent / "results"
+        run_dir = results_dir / all_args.env_name / all_args.scenario_name / all_args.algorithm_name / all_args.experiment_name
+        run_dir.mkdir(parents=True, exist_ok=True)
 
         curr_run = 'run_seed_%i' % (seed + 1)
 
         seed_res_record_file = run_dir / "seed_results.txt"
         
-        run_dir = run_dir / curr_run
-        if not run_dir.exists():
-            os.makedirs(str(run_dir))
-        (run_dir / "models").mkdir(parents=True, exist_ok=True)        
+        curr_run_dir = run_dir / curr_run
+        curr_run_dir.mkdir(parents=True, exist_ok=True)
+        (curr_run_dir / "models").mkdir(parents=True, exist_ok=True)  
 
-        if not os.path.exists(seed_res_record_file):
-            open(seed_res_record_file, 'a+')
+        if not seed_res_record_file.exists():
+            seed_res_record_file.touch()
 
         # seed
         torch.manual_seed(seed)
@@ -79,7 +78,7 @@ if __name__ == "__main__":
             "eval_envs": eval_envs,
             "num_agents": num_agents,
             "device": device,
-            "run_dir": run_dir
+            "run_dir": curr_run_dir
         }
 
         # run experiments
