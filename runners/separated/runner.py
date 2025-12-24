@@ -43,7 +43,7 @@ class CRunner(Runner):
                 elif(episode > self.n_warmup_evaluations):
                     record += 1
                     if(record == self.n_no_improvement_thres):
-                        print("Training finished because of no imporvement for " + str(self.n_no_improvement_thres) + " evaluations")
+                        print("Training finished because of no improvement for " + str(self.n_no_improvement_thres) + " evaluations")
                         return best_reward, best_bw
 
             self.warmup()
