@@ -3,6 +3,7 @@ import numpy as np
 from functools import reduce
 import torch
 from itertools import chain
+from pathlib import Path 
 from runners.separated.base_runner import Runner
 import os
 def _t2n(x):
@@ -23,6 +24,8 @@ class CRunner(Runner):
         overall_reward= []
         best_reward = float('-inf')
         best_bw = []
+        best_cost=[]
+        best_service=[]
         record = 0
 
         for episode in range(episodes):
@@ -39,13 +42,17 @@ class CRunner(Runner):
                     print("A better model is saved!")
                     best_reward = re
                     best_bw = bw_res
+                    best_cost=cost_res
+                    best_service=service_res
                     record = 0
                 elif(episode > self.n_warmup_evaluations):
                     record += 1
                     if(record == self.n_no_improvement_thres):
                         print("Training finished because of no improvement for " + str(self.n_no_improvement_thres) + " evaluations")
-                        return best_reward, best_bw
-
+                        return best_reward, best_bw, best_cost, best_service
+            if episode % self.save_interval == 0:
+                Path(self.save_dir).mkdir(parents=True, exist_ok=True)
+                self.save()
             self.warmup()
             if self.use_linear_lr_decay:
                 self.trainer.policy.lr_decay(episode, episodes)
@@ -132,7 +139,7 @@ class CRunner(Runner):
                 actions_log = []
                 demand_log = []
             # eval
-        return best_reward, best_bw
+        return best_reward, best_bw, best_cost, best_service
     def warmup(self):
         # reset env
         obs, available_actions = self.envs.reset()
