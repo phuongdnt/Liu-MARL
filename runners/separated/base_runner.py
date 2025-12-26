@@ -155,34 +155,37 @@ class Runner(object):
         return train_infos
 
     def save(self):
-        save_path = self.run_dir / 'models'
-        save_path.mkdir(parents=True, exist_ok=True)
-        os.makedirs(str(save_path), exist_ok=True)
-        self.save_dir = str(save_path)
-        for agent_id in range(self.num_agents):
-            if self.use_single_network:
-                model_path = save_path / f"model_agent{agent_id}.pt"
-                model_path.parent.mkdir(parents=True, exist_ok=True)
-                os.makedirs(str(model_path.parent), exist_ok=True)
-                torch.save(
-                    self.trainer[agent_id].policy.model.state_dict(),
-                    str(model_path),
-                )
-            else:
-                actor_path = save_path / f"actor_agent{agent_id}.pt"
-                critic_path = save_path / f"critic_agent{agent_id}.pt"
-                actor_path.parent.mkdir(parents=True, exist_ok=True)
-                critic_path.parent.mkdir(parents=True, exist_ok=True)
-                os.makedirs(str(actor_path.parent), exist_ok=True)
-                os.makedirs(str(critic_path.parent), exist_ok=True)
-                torch.save(
-                    self.trainer[agent_id].policy.actor.state_dict(),
-                    str(actor_path),
-                )
-                torch.save(
-                    self.trainer[agent_id].policy.critic.state_dict(),
-                    str(critic_path),
-                )
+            save_path = self.run_dir / 'models'
+            # Dùng exist_ok=True để tránh lỗi nếu thư mục đã tồn tại
+            save_path.mkdir(parents=True, exist_ok=True)
+            
+            self.save_dir = str(save_path)
+            for agent_id in range(self.num_agents):
+                if self.use_single_network:
+                    model_path = save_path / f"model_agent{agent_id}.pt"
+                    # SỬA: Dùng 'with open' để xử lý đường dẫn tiếng Việt an toàn
+                    with open(str(model_path), 'wb') as f:
+                        torch.save(
+                            self.trainer[agent_id].policy.model.state_dict(),
+                            f,
+                        )
+                else:
+                    actor_path = save_path / f"actor_agent{agent_id}.pt"
+                    critic_path = save_path / f"critic_agent{agent_id}.pt"
+                    
+                    # SỬA: Dùng 'with open' cho actor
+                    with open(str(actor_path), 'wb') as f:
+                        torch.save(
+                            self.trainer[agent_id].policy.actor.state_dict(),
+                            f,
+                        )
+                    
+                    # SỬA: Dùng 'with open' cho critic
+                    with open(str(critic_path), 'wb') as f:
+                        torch.save(
+                            self.trainer[agent_id].policy.critic.state_dict(),
+                            f,
+                        )
 
     def restore(self):
         for agent_id in range(self.num_agents):
