@@ -82,12 +82,16 @@ if __name__ == "__main__":
 
         # run experiments
         runner = Runner(config)
-        reward, bw = runner.run()
+        reward, bw, cost, service = runner.run()
 
         with open(seed_res_record_file, 'a+') as f:
             f.write(str(seed) + ' ' + str(reward) + ' ')
             for fluc in bw:
                 f.write(str(fluc) + ' ')
+            for c in cost:
+                f.write(str(c) + ' ')
+            for s in service:
+                f.write(str(s) + ' ')
             f.write('\n')
 
         # post process
