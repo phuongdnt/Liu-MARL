@@ -12,15 +12,15 @@ def get_config():
     parser.add_argument("--algorithm_name", type=str,
                         default='happo', choices=["happo"])
     parser.add_argument('--scenario_name', type=str, 
-                        default='Inventory Management', help="Which scenario to run on")
-    parser.add_argument("--num_landmarks", type=int, 
+                        default='Inventory_Management', help="Which scenario to run on")
+    parser.add_argument("--num_landmarks", type=int, Q
                         default=3)
     parser.add_argument('--num_agents', type=int, 
                         default=3, help="number of players")
     parser.add_argument("--use_single_network", action='store_true', 
                         default=False)
     parser.add_argument("--experiment_name", type=str, 
-                        default="check", help="an identifier to distinguish different experiment.")
+                        default="check_full_metrics", help="an identifier to distinguish different experiment.")    
     parser.add_argument("--seed", type=int, 
                         default=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], help="Random seed for numpy/torch")
     parser.add_argument("--seed_specify", action="store_true",
